@@ -24,3 +24,14 @@ When you're ready to compile your project, make sure you have the correct Partic
 - Any libraries stored under `lib/<libraryname>/src`
 
 You then just need to run 'particle flash <device_name>' to flast your compiled code to your Particle Photon2
+
+## Setting up a new Photon 2 on OSX from CLI
+
+Plug into USB on the Mac and then:
+
+particle setup
+particle serial wifi
+particle identify
+particle device add <device_id>
+particle device rename <device_id> <new_device_name>
+particle flash <new_device_name>
