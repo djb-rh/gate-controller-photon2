@@ -7,14 +7,13 @@
 
 #include <stdlib.h>
 
-// NCD2Relay relayController;
-
 SYSTEM_MODE(AUTOMATIC);
 
 int RELAY = D2;
 bool relay_state = 0;
 
 int triggerRelay(String command);
+int changeAntenna(String command);
 
 bool tripped[6];
 
@@ -29,6 +28,8 @@ char dev_name[32] = "";
 char pubString[40] = "";
 char restarted_msg[11] = "_restarted";
 bool publishName = false;
+
+SerialLogHandler logHandler;
 
 void handler(const char *topic, const char *data){
     strncpy(dev_name, data, sizeof(dev_name)-1);
@@ -63,17 +64,19 @@ void skipCommand(const char *topic, const char *data){
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
-
+	
         pinMode(RELAY, OUTPUT);
         digitalWrite(RELAY, LOW); // close gate by default at power up
         relay_state = 0;
-	Particle.function("controlRelay", triggerRelay);
+	Particle.function("Relay: 1on, 1off", triggerRelay);
+	Particle.function("Antenna: 0 int, 1 ext", changeAntenna);
 	Particle.subscribe("particle/device/name", handler);
-    Particle.publish("particle/device/name");
-    // allow for up to 3 sec and maximum time to attend to cloud tasks
-    for (uint32_t ms = millis(); millis() - ms < 3000 && !publishName; Particle.process());
+    	Particle.publish("particle/device/name");
+    	// allow for up to 3 sec and maximum time to attend to cloud tasks
+    	for (uint32_t ms = millis(); millis() - ms < 3000 && !publishName; Particle.process());
 	Serial.begin(115200);
 	Serial.println(dev_name);
+
 	strcat(pubString, dev_name);
 	strcat(dev_name, "_relay_1");
 	Particle.subscribe(dev_name, triggerRelayDos, MY_DEVICES);
@@ -87,6 +90,9 @@ void setup()
 
 	// publish state on boot up, too
 	pubState(NULL, NULL);
+
+	Log.info("I'm awake.");
+
 
 
 }
@@ -126,6 +132,8 @@ int triggerRelay(String command){
 		eventName+=(relayNumber);
 		Particle.publish(eventName, "ON", PRIVATE);
 		Serial.println("returning");
+		WiFiSignal sig = WiFi.RSSI();
+		Log.info("WiFi signal strength: %.02f%%", sig.getQuality());
 		return 1;
 	}
 	if(relayCommand.equalsIgnoreCase("off")){
@@ -133,9 +141,27 @@ int triggerRelay(String command){
                 digitalWrite(RELAY, LOW);
 		eventName+=(relayNumber);
 		Particle.publish(eventName, "OFF", PRIVATE);
+		WiFiSignal sig = WiFi.RSSI();
+		Log.info("WiFi signal strength: %.02f%%", sig.getQuality());
 
 		return 1;
 	}
 	return 0;
 }
+
+int changeAntenna(String command){
+	int antennaSetting = command.substring(0,1).toInt();
+	if (antennaSetting) {
+		// set external if 1
+		BLE.selectAntenna(BleAntennaType::EXTERNAL);
+		Log.info("ExternalAnt");
+		return 1;
+	} else {
+		// set internal if zero
+		BLE.selectAntenna(BleAntennaType::INTERNAL);
+		Log.info("InternalAnt");
+		return 0;
+	}
+}
+
 
