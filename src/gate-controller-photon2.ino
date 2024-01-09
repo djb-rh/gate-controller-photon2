@@ -150,6 +150,8 @@ int triggerRelay(String command){
 }
 
 int changeAntenna(String command){
+// These settings are persistent (saved to FLASH) across power settings and
+// supposedly even firmware updates.
 	int antennaSetting = command.substring(0,1).toInt();
 	if (antennaSetting) {
 		// set external if 1
