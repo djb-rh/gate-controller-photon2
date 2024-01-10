@@ -30,8 +30,14 @@ You then just need to run 'particle flash <device_name>' to flast your compiled 
 Plug into USB on the Mac and then:
 
 particle setup
+
 particle serial wifi
+
 particle identify
+
 particle device add <device_id>
+
 particle device rename <device_id> <new_device_name>
+
 particle flash <new_device_name>
+
